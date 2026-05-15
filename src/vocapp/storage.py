@@ -1,21 +1,22 @@
 import pandas as pd
 import os
+from vocapp.config import VOCAB_FILE
 
-VOCAB_FILE = "/home/clara/Documents/vocapp/data/verben_praepositionen.csv"
+def get_memory_file():
+    data_dir = os.path.dirname(VOCAB_FILE)
+    memory_dir = os.path.join(data_dir, "memory")
 
-DATA_DIR = os.path.dirname(VOCAB_FILE)
+    base = os.path.basename(VOCAB_FILE)
+    name, _ = os.path.splitext(base)
 
-MEMORY_DIR = os.path.join(DATA_DIR, "memory")
-
-memory_file = os.path.join(
-    MEMORY_DIR,
-    os.path.basename(VOCAB_FILE).replace(".csv", "_memory.csv")
-)
+    return os.path.join(memory_dir, f"{name}_memory.csv")
 
 
 def ensure_dirs():
-    if not os.path.exists(MEMORY_DIR):
-        os.makedirs(MEMORY_DIR)
+    memory_file = get_memory_file()
+    memory_dir = os.path.dirname(memory_file)
+
+    os.makedirs(memory_dir, exist_ok=True)
 
 
 def load_vocab():
@@ -23,6 +24,7 @@ def load_vocab():
 
 
 def load_memory(memory_cols, vocab_len):
+    memory_file = get_memory_file()
     if not os.path.exists(memory_file):
         memory_dict = {col: [0.0] * vocab_len for col in memory_cols}
         memory_dict["learnt"] = [0.0] * vocab_len
@@ -48,5 +50,5 @@ def load_memory(memory_cols, vocab_len):
     return memory
 
 
-def save_memory(memory):
+def save_memory(memory, memory_file):
     memory.round(2).to_csv(memory_file, index=False)

@@ -2,10 +2,7 @@ import random
 import numpy as np
 import re
 import unicodedata
-
-LEARNING_RATE = 0.5
-ACTIVE_WORDS = 18
-TRIES_PER_ROUND = 20
+from vocapp.config import LEARNING_RATE, ACTIVE_WORDS, TRIES_PER_ROUND
 
 
 # ---------------- NORMALIZATION ----------------
@@ -26,27 +23,46 @@ def normalize_part(text):
 
 
 def compare(a, b):
-    a_parts = set(normalize_part(a).split(","))
-    b_parts = set(normalize_part(b).split(","))
+    a_parts = {normalize_part(p) for p in a.split(",") if p.strip()}
+    b_parts = {normalize_part(p) for p in b.split(",") if p.strip()}
+
     return a_parts == b_parts
 
 
 # ---------------- MEMORY UPDATE ----------------
 def update_memory(memory, indices, correct):
     w, e = indices
+
     step = min(LEARNING_RATE, memory.iloc[w, e])
 
-    if correct:
-        memory.iloc[w, e] -= step
-        if e + 1 < memory.shape[1] - 1:
-            memory.iloc[w, e + 1] += step
+    # First exercise
+    if e == 0:
+        if correct:
+            memory.iloc[w, e] -= step
+
+            if memory.iloc[w, e + 1] < 1:
+                memory.iloc[w, e + 1] += step
+
+        else:
+            memory.iloc[w, e] += step
+
+            if memory.iloc[w, e + 1] > 0:
+                memory.iloc[w, e + 1] -= step
+
+    # Intermediate exercises
     else:
-        memory.iloc[w, e] += step
-        if e > 0:
+        if correct:
+            memory.iloc[w, e] -= step
+            memory.iloc[w, e + 1] += step
+
+        else:
+            memory.iloc[w, e] -= step
             memory.iloc[w, e - 1] += step
 
     if (memory < 0).any().any():
-        raise ValueError("Memory contains negative values")
+        raise ValueError(
+            f"Memory contains negative values! indices: {indices}"
+        )
 
     return memory
 

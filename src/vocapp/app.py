@@ -1,11 +1,11 @@
-from storage import (
+from vocapp.storage import (
     ensure_dirs,
     load_vocab,
     load_memory,
     save_memory
 )
 
-from logic import (
+from vocapp.logic import (
     compare,
     update_memory,
     sample_words,
@@ -14,6 +14,10 @@ from logic import (
 )
 
 import random
+
+
+def main():
+    print("App started")
 
 
 # ---------------- EXERCISES ----------------
@@ -119,7 +123,7 @@ def do_round():
             input()
 
     add_word(memory)
-    save_memory(memory)
+    save_memory(memory, get_memory_file())
 
     return f"Progress: {int(get_progress(memory)*100)}%"
 
