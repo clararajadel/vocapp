@@ -1,0 +1,29 @@
+CHANGES DONE:
+
+Technical
+- if new words add rows in memory file
+
+Logistic
+- add also priority between exercises from easiest to hardest
+- if not correct add more priority
+- when adding a new word make sure that it is already in easier exercises
+
+the total priority is 1, we start having priority 1 in the first exercise, if correct we move a bit of priority (for example 0.2) to exercise 2, and so on, until the last column which is "learned". If not correct we move the priority to the column on the left (if there is) (if not we sum priority to the first exercise, and we can not move priority until we are again at 1)
+
+Bugs check
+just check the case of negative priority, what to do
+also dont allow a same row to be sampled in a round more than once
+
+Visual
+- add progression bar
+
+CHANGES TO DO:
+Visual
+- when new try delete the previous prompted try
+- add emojis for fun
+- print at the end the number of correct tries and make optional to repeat the incorrect ones to review
+- add a summary at the end of the overall learning (learnt words, progress on exercises, etc)
+
+User
+- poner regla, lo que esta entre parantesis no hay que escribirlo 
+- no poner fallo si no se ha escrito un acento
