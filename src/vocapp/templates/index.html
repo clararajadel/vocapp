@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}VocApp — Start{% endblock %}
+
+{% block content %}
+<div class="card card--center animate-in">
+  <p class="card__eyebrow">ready to practice?</p>
+  <h1 class="card__title">Choose your mode</h1>
+
+  <form action="/start" method="POST" class="mode-form">
+    <label class="mode-option">
+      <input type="radio" name="direction" value="1" checked />
+      <span class="mode-option__box">
+        <span class="mode-option__icon">⇄</span>
+        <span class="mode-option__label">Bidirectional</span>
+        <span class="mode-option__desc">DE → ES and ES → DE</span>
+      </span>
+    </label>
+
+    <label class="mode-option">
+      <input type="radio" name="direction" value="2" />
+      <span class="mode-option__box">
+        <span class="mode-option__icon">→</span>
+        <span class="mode-option__label">One-directional</span>
+        <span class="mode-option__desc">DE → ES only</span>
+      </span>
+    </label>
+
+    <button type="submit" class="btn btn--primary">Start round</button>
+  </form>
+</div>
+{% endblock %}

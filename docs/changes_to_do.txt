@@ -1,29 +1,5 @@
-CHANGES DONE:
-
-Technical
-- if new words add rows in memory file
-
-Logistic
-- add also priority between exercises from easiest to hardest
-- if not correct add more priority
-- when adding a new word make sure that it is already in easier exercises
-
-the total priority is 1, we start having priority 1 in the first exercise, if correct we move a bit of priority (for example 0.2) to exercise 2, and so on, until the last column which is "learned". If not correct we move the priority to the column on the left (if there is) (if not we sum priority to the first exercise, and we can not move priority until we are again at 1)
-
-Bugs check
-just check the case of negative priority, what to do
-also dont allow a same row to be sampled in a round more than once
-
-Visual
-- add progression bar
-
-CHANGES TO DO:
-Visual
-- when new try delete the previous prompted try
-- add emojis for fun
-- print at the end the number of correct tries and make optional to repeat the incorrect ones to review
-- add a summary at the end of the overall learning (learnt words, progress on exercises, etc)
-
-User
-- poner regla, lo que esta entre parantesis no hay que escribirlo 
-- no poner fallo si no se ha escrito un acento
+- add the option to choose between the datasets to start the exercises (to avoid computing it manually in the config file)
+- Make sure the tests are reliable
+- Test if new dataset memory file is created
+- make it work with the phone: (Services like Railway or Fly.io let you deploy a Flask app for free (small projects). Your app lives on the internet 24/7, you get a real URL like https://vocapp.railway.app, and it works on any device anywhere with no laptop needed. you'd need a Procfile or Dockerfile but it's a genuinely useful thing to learn and your app is simple enough that it wouldn't be hard.)
+- Change a bit the style with colors that you like better

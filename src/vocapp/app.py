@@ -1,133 +1,173 @@
-from vocapp.storage import (
-    ensure_dirs,
-    load_vocab,
-    load_memory,
-    save_memory
-)
-
-from vocapp.logic import (
-    compare,
-    update_memory,
-    sample_words,
-    add_word,
-    get_progress
-)
-
+from flask import Flask, render_template, request, session, redirect, url_for
 import random
+import os
+
+from vocapp.storage import ensure_dirs, load_vocab, load_memory, save_memory, get_memory_file
+from vocapp.logic import compare, update_memory, sample_words, add_word, get_progress
+
+app = Flask(__name__)
+app.secret_key = "vocapp-secret-key-change-in-production"
 
 
-def main():
-    print("App started")
+# ---------------- HOME ----------------
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 
-# ---------------- EXERCISES ----------------
-def exercise_1(vocab, w):
-    o = vocab.loc[w, "original"]
-    t = vocab.loc[w, "translated"]
-    ex = vocab.loc[w, "example"]
-
-    wrong = list(vocab[vocab["translated"] != t]["translated"].sample(3))
-    options = wrong + [t]
-    random.shuffle(options)
-
-    print(f"\nChoose translation for: {o}")
-    for i, opt in enumerate(options, 1):
-        print(i, opt)
-
-    while True:
-        ans = input("1-4: ")
-        if ans.isdigit() and 1 <= int(ans) <= 4:
-            selected = options[int(ans) - 1]
-            break
-
-    if compare(selected, t):
-        print("Correct")
-        return True
-    else:
-        print("Wrong:", t)
-        print("Example:", ex)
-        return False
-
-
-def exercise_2(vocab, w):
-    o = vocab.loc[w, "original"]
-    t = vocab.loc[w, "translated"]
-    ex = vocab.loc[w, "example"]
-
-    print("Translate:", o)
-    ans = input()
-
-    if compare(ans, t):
-        print("Correct")
-        return True
-    else:
-        print("Wrong:", t)
-        print("Example:", ex)
-        return False
-
-
-def exercise_3(vocab, w):
-    o = vocab.loc[w, "original"]
-    t = vocab.loc[w, "translated"]
-    ex = vocab.loc[w, "example"]
-
-    print("Write original for:", t)
-    ans = input()
-
-    if compare(ans, o):
-        print("Correct")
-        return True
-    else:
-        print("Wrong:", o)
-        print("Example:", ex)
-        return False
-
-
-# ---------------- ROUND ----------------
-def do_round():
-    ensure_dirs()
-
-    print("1: bidirectional")
-    print("2: one-directional")
-
-    direction = input("> ")
+# ---------------- START ROUND ----------------
+@app.route("/start", methods=["POST"])
+def start():
+    direction = request.form.get("direction", "1")
 
     if direction == "1":
-        exercises = [1, 2, 3]
         memory_cols = ["priority_1", "priority_2", "priority_3"]
     else:
-        exercises = [1, 2]
         memory_cols = ["priority_1", "priority_2"]
 
+    ensure_dirs()
     vocab = load_vocab()
     memory = load_memory(memory_cols, len(vocab))
 
     word_idx, ex_idx = sample_words(memory, memory_cols)
 
     if word_idx is None:
-        return "All learned"
+        return render_template("result.html", message="All words learned!", progress=100, score=None)
 
-    exercise_map = {
-        0: exercise_1,
-        1: exercise_2,
-        2: exercise_3
+    session["direction"] = direction
+    session["memory_cols"] = memory_cols
+    session["word_indices"] = word_idx.tolist()
+    session["ex_indices"] = ex_idx.tolist()
+    session["current"] = 0
+    session["score"] = {"correct": 0, "wrong": 0}
+    session["total"] = len(word_idx)
+
+    return redirect(url_for("question"))
+
+
+# ---------------- QUESTION ----------------
+@app.route("/question")
+def question():
+    if "word_indices" not in session:
+        return redirect(url_for("index"))
+
+    current = session["current"]
+    total = session["total"]
+
+    if current >= total:
+        return redirect(url_for("finish"))
+
+    vocab = load_vocab()
+    memory_cols = session["memory_cols"]
+    memory = load_memory(memory_cols, len(vocab))
+
+    w = session["word_indices"][current]
+    e = session["ex_indices"][current]
+
+    original = vocab.loc[w, "original"]
+    translated = vocab.loc[w, "translated"]
+    example = vocab.loc[w, "example"] if vocab.loc[w, "example"] else None
+    note = vocab.loc[w, "note"] if "note" in vocab.columns and vocab.loc[w, "note"] else None
+
+    options = None
+    if e == 0:
+        wrong = list(vocab[vocab["translated"] != translated]["translated"].sample(3))
+        options = wrong + [translated]
+        random.shuffle(options)
+
+    exercise_labels = {
+        0: ("multiple_choice", f"Choose the correct translation for:"),
+        1: ("free_text",       f"Translate:"),
+        2: ("reverse",         f"Write the original word for:"),
     }
+    ex_type, prompt = exercise_labels[e]
 
-    for i, (w, e) in enumerate(zip(word_idx, ex_idx)):
-        print(f"\nProgress {i+1}")
+    display_word = original if e in (0, 1) else translated
 
-        correct = exercise_map[e](vocab, w)
-        memory = update_memory(memory, (w, e), correct)
+    return render_template(
+        "question.html",
+        current=current + 1,
+        total=total,
+        score=session["score"],
+        ex_type=ex_type,
+        prompt=prompt,
+        display_word=display_word,
+        options=options,
+        w=w,
+        e=e,
+    )
 
-        if not correct:
-            input()
+
+# ---------------- ANSWER ----------------
+@app.route("/answer", methods=["POST"])
+def answer():
+    if "word_indices" not in session:
+        return redirect(url_for("index"))
+
+    w = int(request.form.get("w"))
+    e = int(request.form.get("e"))
+    user_answer = request.form.get("answer", "").strip()
+
+    vocab = load_vocab()
+    memory_cols = session["memory_cols"]
+    memory = load_memory(memory_cols, len(vocab))
+
+    original = vocab.loc[w, "original"]
+    translated = vocab.loc[w, "translated"]
+    example = vocab.loc[w, "example"] if vocab.loc[w, "example"] else None
+    note = vocab.loc[w, "note"] if "note" in vocab.columns and vocab.loc[w, "note"] else None
+
+    correct_answer = translated if e in (0, 1) else original
+    is_correct = compare(user_answer, correct_answer)
+
+    memory = update_memory(memory, (w, e), is_correct)
+    save_memory(memory, get_memory_file())
+
+    score = session["score"]
+    if is_correct:
+        score["correct"] += 1
+    else:
+        score["wrong"] += 1
+    session["score"] = score
+    session["current"] = session["current"] + 1
+
+    return render_template(
+        "feedback.html",
+        is_correct=is_correct,
+        user_answer=user_answer,
+        correct_answer=correct_answer,
+        original=original,
+        translated=translated,
+        example=example,
+        note=note,
+        current=session["current"],
+        total=session["total"],
+        score=score,
+    )
+
+
+# ---------------- FINISH ----------------
+@app.route("/finish")
+def finish():
+    if "word_indices" not in session:
+        return redirect(url_for("index"))
+
+    vocab = load_vocab()
+    memory_cols = session["memory_cols"]
+    memory = load_memory(memory_cols, len(vocab))
 
     add_word(memory)
     save_memory(memory, get_memory_file())
 
-    return f"Progress: {int(get_progress(memory)*100)}%"
+    progress = int(get_progress(memory) * 100)
+    score = session.get("score", {})
+    total = session.get("total", 0)
+
+    session.clear()
+
+    return render_template("result.html", progress=progress, score=score, total=total)
 
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
-    print(do_round())
+    app.run(debug=True, host="0.0.0.0", port=5000)

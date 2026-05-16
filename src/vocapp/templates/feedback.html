@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{% if is_correct %}Correct!{% else %}Wrong{% endif %}{% endblock %}
+
+{% block content %}
+<div class="progress-bar-wrap">
+  <div class="progress-bar" style="width: {{ (current - 1) / total * 100 }}%"></div>
+</div>
+
+<div class="round-meta">
+  <span class="round-meta__counter">{{ current }} / {{ total }}</span>
+  <span class="round-meta__score">
+    <span class="correct">{{ score.correct }}✓</span>
+    <span class="wrong">{{ score.wrong }}✗</span>
+  </span>
+</div>
+
+<div class="card animate-in {% if is_correct %}card--correct{% else %}card--wrong{% endif %}">
+
+  <p class="feedback__verdict">
+    {% if is_correct %}✓ Correct{% else %}✗ Wrong{% endif %}
+  </p>
+
+  {% if not is_correct %}
+  <div class="feedback__your-answer">
+    <span class="label">Your answer</span>
+    <span class="value">{{ user_answer if user_answer else "—" }}</span>
+  </div>
+  {% endif %}
+
+  <div class="feedback__pair">
+    <div class="feedback__word">
+      <span class="label">Original</span>
+      <span class="value">{{ original }}</span>
+    </div>
+    <div class="feedback__arrow">→</div>
+    <div class="feedback__word">
+      <span class="label">Translated</span>
+      <span class="value">{{ translated }}</span>
+    </div>
+  </div>
+
+  {% if example %}
+  <div class="feedback__example">
+    <span class="label">Example</span>
+    <p class="value">{{ example }}</p>
+  </div>
+  {% endif %}
+
+  {% if note %}
+  <div class="feedback__note">
+    <span class="label">Note</span>
+    <p class="value">{{ note }}</p>
+  </div>
+  {% endif %}
+
+  <a href="/question" class="btn btn--primary">
+    {% if current >= total %}See results{% else %}Next →{% endif %}
+  </a>
+</div>
+{% endblock %}

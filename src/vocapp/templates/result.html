@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Round complete{% endblock %}
+
+{% block content %}
+<div class="card card--center animate-in">
+
+  <p class="card__eyebrow">round complete</p>
+  <h1 class="card__title">{{ message if message else "Well done!" }}</h1>
+
+  {% if score %}
+  <div class="result__score">
+    <div class="result__stat">
+      <span class="result__num correct">{{ score.correct }}</span>
+      <span class="result__label">correct</span>
+    </div>
+    <div class="result__divider">/</div>
+    <div class="result__stat">
+      <span class="result__num wrong">{{ score.wrong }}</span>
+      <span class="result__label">wrong</span>
+    </div>
+    <div class="result__divider">/</div>
+    <div class="result__stat">
+      <span class="result__num">{{ total }}</span>
+      <span class="result__label">total</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="result__progress">
+    <span class="label">Overall progress</span>
+    <div class="result__bar-wrap">
+      <div class="result__bar" style="width: {{ progress }}%"></div>
+    </div>
+    <span class="result__pct">{{ progress }}%</span>
+  </div>
+
+  <a href="/" class="btn btn--primary">New round</a>
+</div>
+{% endblock %}
