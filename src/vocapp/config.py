@@ -4,7 +4,7 @@ import os
 # export VOCAPP_VOCAB=/path/to/your/file.csv
 VOCAB_FILE = os.environ.get(
     "VOCAPP_VOCAB",
-    os.path.join(os.path.dirname(__file__), "..", "..", "data", "verben_praepositionen.csv")
+    os.path.join(os.path.dirname(__file__), "..", "..", "data", "schachnovelle.csv")
 )
 
 LEARNING_RATE = 0.5
